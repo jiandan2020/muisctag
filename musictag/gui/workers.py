@@ -155,16 +155,15 @@ class ScrapeBatchTask(TaskThread):
                     with_cover=self.with_cover, with_lyrics=self.with_lyrics)
                 changed = False
                 if self.with_meta and best:
-                    for k in ("title", "album", "year", "genre"):
-                        if not fields.get(k) and getattr(best, k, None):
-                            if k == "year" and best.extra and best.extra.get("year"):
-                                fields[k] = best.extra["year"]
-                            elif k in ("title", "album"):
-                                fields[k] = getattr(best, k)
-                    if best.artists and not fields.get("artists"):
-                        fields["artists"] = best.artists
-                    if best.extra and best.extra.get("year") and not fields.get("year"):
-                        fields["year"] = best.extra["year"]
+                    bf = best.to_fields() or {}
+                    for key, tag_key in (("title", "title"), ("album", "album"),
+                                         ("year", "year"), ("genre", "genre"),
+                                         ("track", "track"), ("disc", "disc"),
+                                         ("composer", "composer"), ("comment", "comment")):
+                        if not fields.get(tag_key) and bf.get(key):
+                            fields[tag_key] = bf[key]
+                    if not fields.get("artists") and bf.get("artists"):
+                        fields["artists"] = bf["artists"]
                     changed = True
                 if self.with_lyrics and lyric:
                     text = lyric.best_text(self.prefer)

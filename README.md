@@ -138,20 +138,26 @@ musictag/
 
 ## 扩展新平台
 
-在 `musictag/scrapers/` 下新建模块，继承 `ScraperPlugin` 并实现三个方法：
+在 `musictag/scrapers/` 下新建模块，继承 `Plugin` 并实现三个统一能力（对齐 [Lyrico-Plugins](https://github.com/Replica0110/Lyrico-Plugins) 协议）：
 
 ```python
-from .base import ScraperPlugin, TrackMatch, LyricResult
+from .base import (CoverSearchRequest, LyricsRequest, LyricsResult, Plugin,
+                   PluginConfigField, PluginManifest, Song, SongSearchRequest)
 
-class MyPlugin(ScraperPlugin):
-    name = "myplatform"
-    display_name = "我的平台"
-    def search(self, keyword, limit=10): ...      # -> List[TrackMatch]
-    def get_lyrics(self, track): ...              # -> Optional[LyricResult]
-    def get_cover(self, track): ...               # -> Optional[bytes]
+class MyPlugin(Plugin):
+    manifest = PluginManifest(
+        id="com.myplatform.source", key="myplatform", name="我的平台",
+        version="0.1.0", description="...",
+        capabilities=["searchSongs", "getLyrics", "searchCovers"],
+        config_fields=[PluginConfigField(key="region", title="地区", type="text")],
+    )
+
+    def search_songs(self, request: SongSearchRequest) -> List[Song]: ...
+    def get_lyrics(self, request: LyricsRequest) -> Optional[LyricsResult]: ...
+    def search_covers(self, request: CoverSearchRequest) -> List[Song]: ...
 ```
 
-然后在 `manager.py` 的 `PLUGIN_REGISTRY` 注册即可出现在刮削列表中。
+然后在 `manager.py` 的 `PLUGIN_REGISTRY` 注册（`key -> (显示名, 插件类)`）即可出现在刮削列表中。
 
 ## 常见问题
 

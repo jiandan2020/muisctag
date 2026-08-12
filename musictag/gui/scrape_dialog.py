@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QHBoxLayout,
                                QTableWidgetItem, QTextEdit, QVBoxLayout,
                                QWidget)
 
-from ..scrapers.base import LyricResult, TrackMatch
+from ..scrapers.base import LyricsResult, Song
 from ..scrapers.manager import ScrapeManager, PLUGIN_REGISTRY
 
 _PLATFORM_NAMES = {"netease": "网易云", "qq": "QQ", "kugou": "酷狗",
@@ -47,7 +47,7 @@ class _FetchThread(QThread):
     failed = Signal(str)
     finished_ok = Signal()
 
-    def __init__(self, manager: ScrapeManager, track: TrackMatch, with_lyric: bool,
+    def __init__(self, manager: ScrapeManager, track: Song, with_lyric: bool,
                  with_cover: bool, parent=None):
         super().__init__(parent)
         self.manager = manager
@@ -70,16 +70,16 @@ class _FetchThread(QThread):
 class ScrapeDialog(QDialog):
     """刮削对话框。apply 时通过 signals 返回所选结果。"""
 
-    applied = Signal(object)          # TrackMatch
-    lyrics_ready = Signal(object)     # LyricResult
+    applied = Signal(object)          # Song
+    lyrics_ready = Signal(object)     # LyricsResult
     cover_ready = Signal(bytes)
 
     def __init__(self, keyword: str, config: Dict, parent=None):
         super().__init__(parent)
         self.config = config
         self.manager = ScrapeManager(config)
-        self.track: Optional[TrackMatch] = None
-        self._lyric: Optional[LyricResult] = None
+        self.track: Optional[Song] = None
+        self._lyric: Optional[LyricsResult] = None
         self._cover = b""
         self._build_ui(keyword)
         self.setWindowTitle("在线刮削")
@@ -168,7 +168,7 @@ class ScrapeDialog(QDialog):
         self._thread.finished_ok.connect(self._thread.deleteLater)
         self._thread.start()
 
-    def _show_results(self, items: List[TrackMatch]):
+    def _show_results(self, items: List[Song]):
         self._items = items
         self.table.setRowCount(len(items))
         for r, it in enumerate(items):
@@ -203,7 +203,7 @@ class ScrapeDialog(QDialog):
         self._fetch_thread.finished_ok.connect(self._fetch_thread.deleteLater)
         self._fetch_thread.start()
 
-    def _show_lyric(self, lyric: Optional[LyricResult]):
+    def _show_lyric(self, lyric: Optional[LyricsResult]):
         self._lyric = lyric
         if lyric:
             text = lyric.synced or lyric.plain
